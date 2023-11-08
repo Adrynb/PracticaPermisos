@@ -29,17 +29,22 @@ class AdaptadorEntrada(private var contexto: Context) :
         }
 
     }
+
     override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
         val item = this.getItem(position)
-        var vista = LayoutInflater.from(getContext()).inflate(R.layout.filaentrada, parent, false);
+        var vista = LayoutInflater.from(context).inflate(R.layout.filaentrada, parent, false)
         vista.findViewById<ImageView>(R.id.imageView).setImageBitmap(item?.imagen)
-        vista.findViewById<TextView>(R.id.coordenadas).text="Lat:"+item?.location?.latitude.toString()+" Lon:"+item?.location?.latitude.toString()
+        vista.findViewById<TextView>(R.id.coordenadas).text =
+            "Lat:" + item?.location?.latitude.toString() + " Lon:" + item?.location?.latitude.toString()
 
-        if (item != null ) {
-            vista.findViewById<TextView>(R.id.time).text=  SimpleDateFormat("yyyy.MM.dd HH:mm").format(Date(
-                item.location!!.time))
+        if (item != null) {
+            vista.findViewById<TextView>(R.id.time).text =
+                SimpleDateFormat("yyyy.MM.dd HH:mm").format(
+                    Date(
+                        item.location!!.time
+                    )
+                )
         }
         return vista
     }
-
 }

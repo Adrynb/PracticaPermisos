@@ -46,60 +46,55 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // resetPermissions()
-
         this.configLocation()
         this.configRequests()
 
         adaptador = AdaptadorEntrada(this)
 
         findViewById<ListView>(R.id.list_view).adapter = adaptador
-        findViewById<Button>(R.id.b_peticion).setOnClickListener() {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
-            } else {
-
-                openCamera()
-            }
-
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
-
-            }
+        findViewById<Button>(R.id.b_peticion).setOnClickListener {
+            openCamera()
+            startLocationUpdates()
         }
     }
 
     private fun openCamera() {
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        startActivityForResult(cameraIntent, 1)
+        if (ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.CAMERA
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
 
+            requestCamera.launch(null)
+        } else {
 
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == CAMERA_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            val imageBitmap = data?.extras?.get("data") as Bitmap?
-
-            if (imageBitmap != null) {
-                val nuevaEntrada = Entrada(imagen = imageBitmap, location = lastlocation)
-                adaptador.add(nuevaEntrada)
-                adaptador.notifyDataSetChanged()
-
-                Toast.makeText(this, "Imagen capturada y agregada a la lista", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "No se pudo capturar la imagen", Toast.LENGTH_SHORT).show()
-            }
+            requestPermissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
         }
     }
 
+    private fun startLocationUpdates() {
+        val hasFineLocationPermission = ContextCompat.checkSelfPermission(
+            this,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
 
+        if (hasFineLocationPermission) {
+            locationRequest?.let { request ->
+                locationCallback?.let { callback ->
+                    fusedLocationClient.requestLocationUpdates(request, callback, null)
+                }
+            }
+        } else {
+            requestPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
+        }
+    }
+
+    private fun handleImage(bitmap: Bitmap) {
+        val localicacion = lastlocation
+        val newEntrada = Entrada(bitmap, lastlocation)
+        adaptador.add(newEntrada)
+        adaptador.notifyDataSetChanged()
+    }
     private fun configLocation() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -117,27 +112,21 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-        private fun configRequests() {
-            requestPermissionLauncher =
-                registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(
-                ), {
+    private fun configRequests() {
+        requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(
+            ), {
 
-                })
+            })
 
-            requestCamera = registerForActivityResult(ActivityResultContracts.TakePicturePreview(),
-
-                {
-
-                })
+        requestCamera = registerForActivityResult(
+            ActivityResultContracts.TakePicturePreview()
+        ) {
+            it?.let { bitmap ->
+                handleImage(bitmap)
+            }
         }
-
-    private fun resetPermissions() {
-        val prefs = getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
-        val editor = prefs.edit()
-        editor.clear()
-        editor.apply()
     }
-
 }
 
 
