@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
 
-            requestCamera.launch(null)
+            requestCamera.launch(null) 
         } else {
 
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
@@ -90,7 +90,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun handleImage(bitmap: Bitmap) {
-        val localicacion = lastlocation
         val newEntrada = Entrada(bitmap, lastlocation)
         adaptador.add(newEntrada)
         adaptador.notifyDataSetChanged()
