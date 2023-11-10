@@ -42,16 +42,20 @@ class MainActivity : AppCompatActivity() {
     private var lastlocation: Location? = null
     private lateinit var texto: TextView
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Configuración inicial
         this.configLocation()
         this.configRequests()
 
+        // Inicialización del adaptador
         adaptador = AdaptadorEntrada(this)
-
         findViewById<ListView>(R.id.list_view).adapter = adaptador
+
+        // Configuración del botón de peticion.
         findViewById<Button>(R.id.b_peticion).setOnClickListener {
             openCamera()
             startLocationUpdates()
@@ -59,41 +63,47 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
+        // Solicita los permisos de la camara
         if (ContextCompat.checkSelfPermission(
                 this,
                 Manifest.permission.CAMERA
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-
-            requestCamera.launch(null) 
+            // Abre la camara si los permisos fueron concedidos
+            requestCamera.launch(null)
         } else {
-
+            // Solicitar permisos si no se concedieron
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.CAMERA))
         }
     }
 
     private fun startLocationUpdates() {
+
         val hasFineLocationPermission = ContextCompat.checkSelfPermission(
             this,
             Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasFineLocationPermission) {
+            // Iniciar actualizaciones de ubicación si se concedieron los permisos
             locationRequest?.let { request ->
                 locationCallback?.let { callback ->
                     fusedLocationClient.requestLocationUpdates(request, callback, null)
                 }
             }
         } else {
+            // Solicita permisos del gps si no fueron concedidos.
             requestPermissionLauncher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
         }
     }
 
     private fun handleImage(bitmap: Bitmap) {
+        // Guarda la ultima imagen capturada por la camara y su ultima locacización
         val newEntrada = Entrada(bitmap, lastlocation)
-        adaptador.add(newEntrada)
-        adaptador.notifyDataSetChanged()
+        adaptador.add(newEntrada) // Se agrega en el objeto de Adaptador entrada
+        adaptador.notifyDataSetChanged() //Notifica la fecha una vez cambiada
     }
+
     private fun configLocation() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -104,30 +114,25 @@ class MainActivity : AppCompatActivity() {
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
-
+                // Actualiza la ultima ubicacion.
                 lastlocation = p0.lastLocation
             }
         }
-
     }
 
     private fun configRequests() {
-        requestPermissionLauncher =
-            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions(
-            ), {
 
-            })
+        requestPermissionLauncher =
+            registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { }
 
         requestCamera = registerForActivityResult(
             ActivityResultContracts.TakePicturePreview()
         ) {
+            // Envia la imagen guardada por la camara.
             it?.let { bitmap ->
                 handleImage(bitmap)
             }
         }
     }
 }
-
-
-
 
